@@ -5,13 +5,13 @@ built as a single self-contained web page.
 
 ## The page
 
-`parallel.html` is one file. No build step, no dependencies, no server — open it
+`index.html` is one file. No build step, no dependencies, no server — open it
 in a browser and it runs. Everything is inlined, including the paintings.
 
 Open it locally:
 
 ```bash
-open parallel.html
+open index.html
 ```
 
 ## What's in it
