@@ -187,7 +187,14 @@ header{padding:var(--spacing-20);display:flex;align-items:center;justify-content
 .bk__m{display:flex;flex-direction:column;gap:var(--element-gap)}
 .bk__when{color:var(--dim);font-size:12px;text-align:right}
 .bk__act{display:flex;justify-content:flex-end}
-.cap{display:inline-flex;align-items:center;gap:8px;border:1px solid currentColor;padding:9px 20px;font-size:12px;line-height:1.25;color:var(--dim);border-radius:var(--radius-buttons);clip-path:polygon(11px 0,calc(100% - 11px) 0,100% 50%,calc(100% - 11px) 100%,11px 100%,0 50%);transition:color .45s ease}
+/* a clip-path cuts straight through a 1px border and leaves the ends open, which is
+   why this read as unfinished. Full capsule outline instead; the hexagon carries the state. */
+.cap{display:inline-flex;align-items:center;gap:9px;border:1px solid currentColor;
+  padding:10px 20px;font-size:12px;line-height:1.25;color:var(--dim);
+  border-radius:var(--radius-buttons);background:transparent;
+  transition:color .4s ease,background .4s ease,border-color .4s ease}
+.cap .hex{width:11px;height:11px}
+.bk__row.done .cap{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}
 .cap:hover{color:var(--color-paper)}
 .cap .hex path{transition:fill .45s ease}
 .bk__row.done .cap,.bk__row.done .bk__n{color:var(--color-paper)}
@@ -452,22 +459,17 @@ header{position:relative;z-index:12;background:transparent}
   .mark{width:28px;height:28px}
   .room{padding:var(--section-gap) 16px}
 
-  /* on a phone the tabs are a bar on the bottom edge, thumb height, frosted */
-  .tabs,html.no-hero .tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:40;
-    background:rgba(10,10,9,.7);
-    -webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
-    border-top:1px solid rgba(255,255,255,.14);border-bottom:0;
-    color:var(--color-paper);padding-bottom:env(safe-area-inset-bottom,0px)}
-  .tabs.on-dark{color:var(--color-paper)}
+  /* tabs stay at the top and ride up over the painting as you scroll */
   .tabs__in{justify-content:space-between;gap:0;padding:0 2px;overflow:visible}
-  .tab{flex:1 1 0;justify-content:center;padding:17px 2px;font-size:11.5px;
+  .tab{flex:1 1 0;justify-content:center;padding:16px 2px;font-size:11.5px;
        letter-spacing:.04em;gap:0;opacity:.5;min-width:0}
-  .tab[aria-selected="true"]{opacity:1;border-bottom-color:transparent}
   .tab .hex{display:none}
-  /* nothing hides under the bar */
-  .room{padding-bottom:calc(var(--section-gap) + 76px)}
-  .cityroute{padding-bottom:76px}
-  .floor{padding-bottom:34vh}
+
+  /* the first screen is clean -- no painting until you scroll.
+     Room here for the countdown and route notes later. */
+  .hero{min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+  .hero__cluster{padding:0 20px 30px}
+  .floor{padding-bottom:8px}
 
   /* opening screen */
   .hero__cluster{padding:26px 18px 44px;gap:12px}
@@ -481,10 +483,10 @@ header{position:relative;z-index:12;background:transparent}
 
   /* the card fills the phone properly */
   /* the card stays in the middle on a phone too, and simply grows there */
-  .plate{width:calc(100% - 24px);height:264px;top:46%;bottom:auto;
+  .plate{width:calc(100% - 24px);height:264px;top:50%;bottom:auto;
          transform:translate(-50%,-50%);
          transition:height .45s cubic-bezier(.22,.8,.3,1),width .45s cubic-bezier(.22,.8,.3,1)}
-  .plate.open{width:calc(100% - 16px);height:min(70dvh,600px)}
+  .plate.open{width:calc(100% - 16px);height:min(76dvh,620px)}
   .slide{left:16px;right:16px;top:18px;bottom:44px;gap:8px}
   .plate__tick{width:9px;height:9px}
   /* the wordmark is not cut mid-letter on a phone -- the painting meets its baseline */
@@ -494,8 +496,8 @@ header{position:relative;z-index:12;background:transparent}
   .slide__b{font-size:12.5px}
   .plate__more{right:18px;bottom:34px;padding:6px 0}
   .plate__foot{left:18px;right:18px;bottom:12px}
-  .world__city{top:auto;bottom:132px;right:16px}
-  .world__credit{left:16px;bottom:114px;font-size:8px}
+  .world__city{top:auto;bottom:64px;right:16px}
+  .world__credit{left:16px;bottom:46px;font-size:8px}
   .drow{grid-template-columns:minmax(0,1fr);gap:4px;padding:12px 0}
   .drow__when{flex-direction:row;align-items:baseline;gap:10px}
   .drow__t{font-size:19px}
@@ -813,6 +815,28 @@ html.dark-page .room--ink{background:transparent}
     a.addEventListener('click', function(){ show(a.getAttribute('data-go')); });
   });
 
+  /* ---------------- "open the itinerary" eases in rather than jumping ---------------- */
+  var ctaEl = document.querySelector('.cta');
+  if (ctaEl) ctaEl.addEventListener('click', function(ev){
+    var target = document.querySelector(ctaEl.getAttribute('href') || '');
+    if (!target) return;
+    ev.preventDefault();
+    var startY = window.pageYOffset || 0;
+    var endY = startY + target.getBoundingClientRect().top;
+    if (reduce) { window.scrollTo(0, endY); return; }
+    var root = document.documentElement, prev = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';           /* don't fight the CSS smooth scroll */
+    var dur = 1600, t0 = null;
+    function ease(t){ return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+    requestAnimationFrame(function step(ts){
+      if (t0 === null) t0 = ts;
+      var p = Math.min((ts - t0) / dur, 1);
+      window.scrollTo(0, startY + (endY - startY) * ease(p));
+      if (p < 1) requestAnimationFrame(step);
+      else root.style.scrollBehavior = prev;
+    });
+  });
+
   /* ---------------- the card opens into the full day ---------------- */
   var plate = document.querySelector('.plate');
   var more  = document.querySelector('.plate__more');
@@ -899,10 +923,14 @@ html.dark-page .room--ink{background:transparent}
       var cut = 0;
       if (wmEl) {
         var wr = wmEl.getBoundingClientRect();
-        /* halving the letters reads well on a wide screen; on a phone the wordmark is
-           relatively huge, so the painting meets its baseline instead of slicing it */
-        var ratio = window.innerWidth <= 640 ? 0.97 : 0.50;
-        cut = clamp(wr.top + wr.height * ratio, 0, vh);
+        if (window.innerWidth <= 640) {
+          /* phone: the first screen carries no painting at all. It arrives from the
+             bottom the moment you start scrolling, as the hero clears the frame. */
+          cut = clamp(hero.getBoundingClientRect().bottom, 0, vh);
+        } else {
+          /* wide screens keep the half-cut through the wordmark */
+          cut = clamp(wr.top + wr.height * 0.50, 0, vh);
+        }
       }
       canvases[0].style.clipPath = 'inset(' + cut.toFixed(1) + 'px 0px 0px 0px)';
       stageClipTop = cut;
