@@ -394,26 +394,23 @@ header{position:relative;z-index:12;background:transparent}
 .room--ink .paper em{color:var(--dim)}
 
 
-/* ---- the wire lattice: a full-screen pattern with light running along the wires ---- */
-.wires{position:fixed;inset:0;z-index:0;pointer-events:none;width:100vw;height:100vh;height:100dvh}
-.wires .w-dim{stroke:#2e2e2b;stroke-width:1;fill:none;vector-effect:non-scaling-stroke}
-.wires .w-lit{stroke:#fdfcf8;stroke-width:1.4;fill:none;vector-effect:non-scaling-stroke;
-  stroke-linecap:round;stroke-dasharray:58 450;opacity:.9;filter:url(#glow);
-  animation:travel 16s linear infinite}
-.wires .w-lit:nth-of-type(2n){animation-duration:21s;animation-delay:-6s}
-.wires .w-lit:nth-of-type(3n){animation-duration:26s;animation-delay:-13s}
-.wires .w-lit:nth-of-type(4n){animation-duration:19s;animation-delay:-9s}
-.wires .w-lit:nth-of-type(5n){animation-duration:23s;animation-delay:-17s}
-@keyframes travel{from{stroke-dashoffset:514}to{stroke-dashoffset:0}}
-.wires .node{fill:none;stroke:#3f3f3b;stroke-width:1;vector-effect:non-scaling-stroke;
-  animation:pulse 16s ease-in-out infinite}
-.wires .node.lit{filter:url(#glow)}
-.wires .node:nth-of-type(2n){animation-delay:-5s;animation-duration:21s}
-.wires .node:nth-of-type(3n){animation-delay:-11s;animation-duration:26s}
-@keyframes pulse{0%,84%,100%{stroke:#3f3f3b}91%{stroke:#fdfcf8;stroke-width:1.5}}
+/* ---- the wire lattice. No SVG filter: filters re-rasterise every frame and were
+       what made this crawl. The halo is a second, wider stroke composited under the
+       bright one, and only seven wires carry light. ---- */
+.wires{position:fixed;inset:0;z-index:0;pointer-events:none;width:100vw;height:100vh;height:100dvh;
+  contain:strict}
+.wires line{vector-effect:non-scaling-stroke;fill:none;stroke-linecap:round}
+.wires .w-dim{stroke:#2b2b28;stroke-width:1}
+.wires .w-halo{stroke:#e9e7e0;stroke-width:6;opacity:.1;stroke-dasharray:120 700;
+  animation:travel 26s linear infinite}
+.wires .w-lit{stroke:#fffdf7;stroke-width:1.3;opacity:.75;stroke-dasharray:120 700;
+  animation:travel 26s linear infinite}
+.wires .w-halo:nth-of-type(2n),.wires .w-lit:nth-of-type(2n){animation-duration:34s;animation-delay:-9s}
+.wires .w-halo:nth-of-type(3n),.wires .w-lit:nth-of-type(3n){animation-duration:30s;animation-delay:-19s}
+@keyframes travel{from{stroke-dashoffset:820}to{stroke-dashoffset:0}}
+.wires .node{fill:none;stroke:#3c3c38;stroke-width:1;vector-effect:non-scaling-stroke}
 @media (prefers-reduced-motion:reduce){
-  .wires .w-lit{animation:none;stroke-dasharray:none;opacity:.16}
-  .wires .node{animation:none}
+  .wires .w-halo,.wires .w-lit{animation:none;stroke-dasharray:none;opacity:.12}
 }
 
 /* ---- travel: three circles, then one city takes the frame ---- */
@@ -455,10 +452,22 @@ header{position:relative;z-index:12;background:transparent}
   .mark{width:28px;height:28px}
   .room{padding:var(--section-gap) 16px}
 
-  /* tabs: five fit across a phone, scrollable if they don't */
-  .tabs__in{justify-content:flex-start;gap:0;padding:0 8px}
-  .tab{padding:15px 11px;font-size:10px;letter-spacing:.08em;gap:0}
+  /* on a phone the tabs are a bar on the bottom edge, thumb height, frosted */
+  .tabs,html.no-hero .tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:40;
+    background:rgba(10,10,9,.7);
+    -webkit-backdrop-filter:blur(22px) saturate(150%);backdrop-filter:blur(22px) saturate(150%);
+    border-top:1px solid rgba(255,255,255,.14);border-bottom:0;
+    color:var(--color-paper);padding-bottom:env(safe-area-inset-bottom,0px)}
+  .tabs.on-dark{color:var(--color-paper)}
+  .tabs__in{justify-content:space-between;gap:0;padding:0 2px;overflow:visible}
+  .tab{flex:1 1 0;justify-content:center;padding:17px 2px;font-size:11.5px;
+       letter-spacing:.04em;gap:0;opacity:.5;min-width:0}
+  .tab[aria-selected="true"]{opacity:1;border-bottom-color:transparent}
   .tab .hex{display:none}
+  /* nothing hides under the bar */
+  .room{padding-bottom:calc(var(--section-gap) + 76px)}
+  .cityroute{padding-bottom:76px}
+  .floor{padding-bottom:34vh}
 
   /* opening screen */
   .hero__cluster{padding:26px 18px 44px;gap:12px}
@@ -471,18 +480,22 @@ header{position:relative;z-index:12;background:transparent}
   .world{height:calc(3 * 150vh)}
 
   /* the card fills the phone properly */
-  /* on a phone the card is a sheet on the bottom edge that grows upward */
-  .plate{width:calc(100% - 20px);height:250px;top:auto;bottom:12px;
-         transform:translateX(-50%);transition:height .45s cubic-bezier(.22,.8,.3,1)}
-  .plate.open{width:calc(100% - 12px);height:calc(100dvh - 132px)}
+  /* the card stays in the middle on a phone too, and simply grows there */
+  .plate{width:calc(100% - 24px);height:264px;top:46%;bottom:auto;
+         transform:translate(-50%,-50%);
+         transition:height .45s cubic-bezier(.22,.8,.3,1),width .45s cubic-bezier(.22,.8,.3,1)}
+  .plate.open{width:calc(100% - 16px);height:min(70dvh,600px)}
   .slide{left:16px;right:16px;top:18px;bottom:44px;gap:8px}
   .plate__tick{width:9px;height:9px}
+  /* the wordmark is not cut mid-letter on a phone -- the painting meets its baseline */
+  :root{--text-display:30vw}
+  .floor{padding-bottom:34vh}
   .slide__t{font-size:21px}
   .slide__b{font-size:12.5px}
   .plate__more{right:18px;bottom:34px;padding:6px 0}
   .plate__foot{left:18px;right:18px;bottom:12px}
-  .world__city{top:auto;bottom:70px;right:16px}
-  .world__credit{left:16px;bottom:52px;font-size:8px}
+  .world__city{top:auto;bottom:132px;right:16px}
+  .world__credit{left:16px;bottom:114px;font-size:8px}
   .drow{grid-template-columns:minmax(0,1fr);gap:4px;padding:12px 0}
   .drow__when{flex-direction:row;align-items:baseline;gap:10px}
   .drow__t{font-size:19px}
@@ -516,7 +529,7 @@ header{position:relative;z-index:12;background:transparent}
   .stat b{font-size:38px}
 }
 @media (max-width:420px){
-  .tab{padding:14px 8px;font-size:9.5px}
+  .tab{padding:16px 1px;font-size:10.5px}
   .hero__cluster .t-52m{font-size:clamp(22px,6.4vw,28px)}
   .pick__disc,.vig__disc{width:118px;height:118px}
 }
@@ -533,6 +546,20 @@ header{position:relative;z-index:12;background:transparent}
   .legrow{grid-template-columns:110px minmax(0,1fr) 120px}
   .pick__disc{width:160px;height:160px}
 }
+
+
+/* ---- frosted glass so the boxes read as objects above the painting ---- */
+.room--ink .hotel{background:rgba(255,255,255,.055)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(115%);backdrop-filter:blur(16px) saturate(115%);
+  border-color:rgba(255,255,255,.14)}
+.room--ink .hotel:hover{background:rgba(255,255,255,.085)!important;
+  border-color:rgba(255,255,255,.24)}
+.cityroute__in{position:relative}
+.bk{background:rgba(8,8,7,.4);
+  -webkit-backdrop-filter:blur(18px) saturate(115%);backdrop-filter:blur(18px) saturate(115%);
+  border:1px solid rgba(255,255,255,.11);border-radius:var(--radius-cards);
+  padding:0 var(--card-padding)}
+.bk__row:last-child,.legrow:last-child{border-bottom:0}
 
 </style>
 
@@ -575,15 +602,10 @@ header{position:relative;z-index:12;background:transparent}
 <div id="view-hotels" role="tabpanel" aria-labelledby="tab-hotels" hidden>
   <section class="room room--ink">
     <div class="hotelbg" aria-hidden="true"><svg class="wires" viewBox="0 0 120 80" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs><filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="1.6" result="b1"/>
-        <feGaussianBlur stdDeviation="3.4" result="b2"/>
-        <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="b1"/>
-          <feMergeNode in="SourceGraphic"/></feMerge>
-      </filter></defs>
-      <line class="w-dim" x1="0" y1="10" x2="60" y2="-16"/><line class="w-dim" x1="60" y1="-16" x2="120" y2="10"/><line class="w-dim" x1="0" y1="70" x2="60" y2="96"/><line class="w-dim" x1="60" y1="96" x2="120" y2="70"/><line class="w-dim" x1="0" y1="10" x2="0" y2="70"/><line class="w-dim" x1="120" y1="10" x2="120" y2="70"/><line class="w-dim" x1="0" y1="40" x2="120" y2="40"/><line class="w-dim" x1="60" y1="-16" x2="60" y2="96"/><line class="w-dim" x1="0" y1="10" x2="120" y2="70"/><line class="w-dim" x1="0" y1="70" x2="120" y2="10"/><line class="w-dim" x1="30" y1="-6" x2="30" y2="86"/><line class="w-dim" x1="90" y1="-6" x2="90" y2="86"/><line class="w-dim" x1="0" y1="25" x2="120" y2="55"/><line class="w-dim" x1="0" y1="55" x2="120" y2="25"/><line class="w-dim" x1="30" y1="-6" x2="120" y2="40"/><line class="w-dim" x1="0" y1="40" x2="90" y2="86"/><line class="w-dim" x1="0" y1="40" x2="30" y2="-6"/><line class="w-dim" x1="90" y1="86" x2="120" y2="40"/>
-      <line class="w-lit" x1="0" y1="10" x2="60" y2="-16"/><line class="w-lit" x1="60" y1="-16" x2="120" y2="10"/><line class="w-lit" x1="0" y1="70" x2="60" y2="96"/><line class="w-lit" x1="60" y1="96" x2="120" y2="70"/><line class="w-lit" x1="0" y1="10" x2="0" y2="70"/><line class="w-lit" x1="120" y1="10" x2="120" y2="70"/><line class="w-lit" x1="0" y1="40" x2="120" y2="40"/><line class="w-lit" x1="60" y1="-16" x2="60" y2="96"/><line class="w-lit" x1="0" y1="10" x2="120" y2="70"/><line class="w-lit" x1="0" y1="70" x2="120" y2="10"/><line class="w-lit" x1="30" y1="-6" x2="30" y2="86"/><line class="w-lit" x1="90" y1="-6" x2="90" y2="86"/><line class="w-lit" x1="0" y1="25" x2="120" y2="55"/><line class="w-lit" x1="0" y1="55" x2="120" y2="25"/><line class="w-lit" x1="30" y1="-6" x2="120" y2="40"/><line class="w-lit" x1="0" y1="40" x2="90" y2="86"/><line class="w-lit" x1="0" y1="40" x2="30" y2="-6"/><line class="w-lit" x1="90" y1="86" x2="120" y2="40"/>
-      <polygon class="node" points="60.0,37.4 62.3,38.7 62.3,41.3 60.0,42.6 57.7,41.3 57.7,38.7"/><polygon class="node" points="30.0,37.4 32.3,38.7 32.3,41.3 30.0,42.6 27.7,41.3 27.7,38.7"/><polygon class="node" points="90.0,37.4 92.3,38.7 92.3,41.3 90.0,42.6 87.7,41.3 87.7,38.7"/><polygon class="node" points="0.0,37.4 2.3,38.7 2.3,41.3 0.0,42.6 -2.3,41.3 -2.3,38.7"/><polygon class="node" points="120.0,37.4 122.3,38.7 122.3,41.3 120.0,42.6 117.7,41.3 117.7,38.7"/><polygon class="node" points="60.0,7.4 62.3,8.7 62.3,11.3 60.0,12.6 57.7,11.3 57.7,8.7"/><polygon class="node" points="60.0,67.4 62.3,68.7 62.3,71.3 60.0,72.6 57.7,71.3 57.7,68.7"/><polygon class="node" points="30.0,22.4 32.3,23.7 32.3,26.3 30.0,27.6 27.7,26.3 27.7,23.7"/><polygon class="node" points="90.0,52.4 92.3,53.7 92.3,56.3 90.0,57.6 87.7,56.3 87.7,53.7"/><polygon class="node" points="30.0,52.4 32.3,53.7 32.3,56.3 30.0,57.6 27.7,56.3 27.7,53.7"/><polygon class="node" points="90.0,22.4 92.3,23.7 92.3,26.3 90.0,27.6 87.7,26.3 87.7,23.7"/><polygon class="node" points="15.0,37.4 17.3,38.7 17.3,41.3 15.0,42.6 12.7,41.3 12.7,38.7"/><polygon class="node" points="105.0,37.4 107.3,38.7 107.3,41.3 105.0,42.6 102.7,41.3 102.7,38.7"/><polygon class="node" points="60.0,22.4 62.3,23.7 62.3,26.3 60.0,27.6 57.7,26.3 57.7,23.7"/><polygon class="node" points="60.0,52.4 62.3,53.7 62.3,56.3 60.0,57.6 57.7,56.3 57.7,53.7"/></svg>
+      <line class="w-dim" x1="0" y1="12" x2="120" y2="68"/><line class="w-dim" x1="0" y1="68" x2="120" y2="12"/><line class="w-dim" x1="60" y1="-10" x2="60" y2="90"/><line class="w-dim" x1="0" y1="40" x2="120" y2="40"/><line class="w-dim" x1="0" y1="12" x2="60" y2="-10"/><line class="w-dim" x1="60" y1="90" x2="120" y2="68"/><line class="w-dim" x1="30" y1="-10" x2="120" y2="52"/>
+      <line class="w-halo" x1="0" y1="12" x2="120" y2="68"/><line class="w-halo" x1="0" y1="68" x2="120" y2="12"/><line class="w-halo" x1="60" y1="-10" x2="60" y2="90"/><line class="w-halo" x1="0" y1="40" x2="120" y2="40"/><line class="w-halo" x1="0" y1="12" x2="60" y2="-10"/><line class="w-halo" x1="60" y1="90" x2="120" y2="68"/><line class="w-halo" x1="30" y1="-10" x2="120" y2="52"/>
+      <line class="w-lit" x1="0" y1="12" x2="120" y2="68"/><line class="w-lit" x1="0" y1="68" x2="120" y2="12"/><line class="w-lit" x1="60" y1="-10" x2="60" y2="90"/><line class="w-lit" x1="0" y1="40" x2="120" y2="40"/><line class="w-lit" x1="0" y1="12" x2="60" y2="-10"/><line class="w-lit" x1="60" y1="90" x2="120" y2="68"/><line class="w-lit" x1="30" y1="-10" x2="120" y2="52"/>
+      <polygon class="node" points="60.0,37.6 62.1,38.8 62.1,41.2 60.0,42.4 57.9,41.2 57.9,38.8"/><polygon class="node" points="30.0,23.6 32.1,24.8 32.1,27.2 30.0,28.4 27.9,27.2 27.9,24.8"/><polygon class="node" points="90.0,51.6 92.1,52.8 92.1,55.2 90.0,56.4 87.9,55.2 87.9,52.8"/><polygon class="node" points="0.0,37.6 2.1,38.8 2.1,41.2 0.0,42.4 -2.1,41.2 -2.1,38.8"/><polygon class="node" points="120.0,37.6 122.1,38.8 122.1,41.2 120.0,42.4 117.9,41.2 117.9,38.8"/><polygon class="node" points="60.0,-12.4 62.1,-11.2 62.1,-8.8 60.0,-7.6 57.9,-8.8 57.9,-11.2"/><polygon class="node" points="60.0,87.6 62.1,88.8 62.1,91.2 60.0,92.4 57.9,91.2 57.9,88.8"/></svg>
     </div>
     <div class="wrap">
       <div class="head"><h2 class="t-52 rev">Where you sleep</h2>
@@ -695,15 +717,10 @@ header{position:relative;z-index:12;background:transparent}
 
 <div id="view-tickets" role="tabpanel" aria-labelledby="tab-tickets" hidden>
   <section class="room room--ink"><svg class="wires" viewBox="0 0 120 80" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs><filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="1.6" result="b1"/>
-        <feGaussianBlur stdDeviation="3.4" result="b2"/>
-        <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="b1"/>
-          <feMergeNode in="SourceGraphic"/></feMerge>
-      </filter></defs>
-      <line class="w-dim" x1="0" y1="10" x2="60" y2="-16"/><line class="w-dim" x1="60" y1="-16" x2="120" y2="10"/><line class="w-dim" x1="0" y1="70" x2="60" y2="96"/><line class="w-dim" x1="60" y1="96" x2="120" y2="70"/><line class="w-dim" x1="0" y1="10" x2="0" y2="70"/><line class="w-dim" x1="120" y1="10" x2="120" y2="70"/><line class="w-dim" x1="0" y1="40" x2="120" y2="40"/><line class="w-dim" x1="60" y1="-16" x2="60" y2="96"/><line class="w-dim" x1="0" y1="10" x2="120" y2="70"/><line class="w-dim" x1="0" y1="70" x2="120" y2="10"/><line class="w-dim" x1="30" y1="-6" x2="30" y2="86"/><line class="w-dim" x1="90" y1="-6" x2="90" y2="86"/><line class="w-dim" x1="0" y1="25" x2="120" y2="55"/><line class="w-dim" x1="0" y1="55" x2="120" y2="25"/><line class="w-dim" x1="30" y1="-6" x2="120" y2="40"/><line class="w-dim" x1="0" y1="40" x2="90" y2="86"/><line class="w-dim" x1="0" y1="40" x2="30" y2="-6"/><line class="w-dim" x1="90" y1="86" x2="120" y2="40"/>
-      <line class="w-lit" x1="0" y1="10" x2="60" y2="-16"/><line class="w-lit" x1="60" y1="-16" x2="120" y2="10"/><line class="w-lit" x1="0" y1="70" x2="60" y2="96"/><line class="w-lit" x1="60" y1="96" x2="120" y2="70"/><line class="w-lit" x1="0" y1="10" x2="0" y2="70"/><line class="w-lit" x1="120" y1="10" x2="120" y2="70"/><line class="w-lit" x1="0" y1="40" x2="120" y2="40"/><line class="w-lit" x1="60" y1="-16" x2="60" y2="96"/><line class="w-lit" x1="0" y1="10" x2="120" y2="70"/><line class="w-lit" x1="0" y1="70" x2="120" y2="10"/><line class="w-lit" x1="30" y1="-6" x2="30" y2="86"/><line class="w-lit" x1="90" y1="-6" x2="90" y2="86"/><line class="w-lit" x1="0" y1="25" x2="120" y2="55"/><line class="w-lit" x1="0" y1="55" x2="120" y2="25"/><line class="w-lit" x1="30" y1="-6" x2="120" y2="40"/><line class="w-lit" x1="0" y1="40" x2="90" y2="86"/><line class="w-lit" x1="0" y1="40" x2="30" y2="-6"/><line class="w-lit" x1="90" y1="86" x2="120" y2="40"/>
-      <polygon class="node" points="60.0,37.4 62.3,38.7 62.3,41.3 60.0,42.6 57.7,41.3 57.7,38.7"/><polygon class="node" points="30.0,37.4 32.3,38.7 32.3,41.3 30.0,42.6 27.7,41.3 27.7,38.7"/><polygon class="node" points="90.0,37.4 92.3,38.7 92.3,41.3 90.0,42.6 87.7,41.3 87.7,38.7"/><polygon class="node" points="0.0,37.4 2.3,38.7 2.3,41.3 0.0,42.6 -2.3,41.3 -2.3,38.7"/><polygon class="node" points="120.0,37.4 122.3,38.7 122.3,41.3 120.0,42.6 117.7,41.3 117.7,38.7"/><polygon class="node" points="60.0,7.4 62.3,8.7 62.3,11.3 60.0,12.6 57.7,11.3 57.7,8.7"/><polygon class="node" points="60.0,67.4 62.3,68.7 62.3,71.3 60.0,72.6 57.7,71.3 57.7,68.7"/><polygon class="node" points="30.0,22.4 32.3,23.7 32.3,26.3 30.0,27.6 27.7,26.3 27.7,23.7"/><polygon class="node" points="90.0,52.4 92.3,53.7 92.3,56.3 90.0,57.6 87.7,56.3 87.7,53.7"/><polygon class="node" points="30.0,52.4 32.3,53.7 32.3,56.3 30.0,57.6 27.7,56.3 27.7,53.7"/><polygon class="node" points="90.0,22.4 92.3,23.7 92.3,26.3 90.0,27.6 87.7,26.3 87.7,23.7"/><polygon class="node" points="15.0,37.4 17.3,38.7 17.3,41.3 15.0,42.6 12.7,41.3 12.7,38.7"/><polygon class="node" points="105.0,37.4 107.3,38.7 107.3,41.3 105.0,42.6 102.7,41.3 102.7,38.7"/><polygon class="node" points="60.0,22.4 62.3,23.7 62.3,26.3 60.0,27.6 57.7,26.3 57.7,23.7"/><polygon class="node" points="60.0,52.4 62.3,53.7 62.3,56.3 60.0,57.6 57.7,56.3 57.7,53.7"/></svg><div class="wrap">
+      <line class="w-dim" x1="0" y1="12" x2="120" y2="68"/><line class="w-dim" x1="0" y1="68" x2="120" y2="12"/><line class="w-dim" x1="60" y1="-10" x2="60" y2="90"/><line class="w-dim" x1="0" y1="40" x2="120" y2="40"/><line class="w-dim" x1="0" y1="12" x2="60" y2="-10"/><line class="w-dim" x1="60" y1="90" x2="120" y2="68"/><line class="w-dim" x1="30" y1="-10" x2="120" y2="52"/>
+      <line class="w-halo" x1="0" y1="12" x2="120" y2="68"/><line class="w-halo" x1="0" y1="68" x2="120" y2="12"/><line class="w-halo" x1="60" y1="-10" x2="60" y2="90"/><line class="w-halo" x1="0" y1="40" x2="120" y2="40"/><line class="w-halo" x1="0" y1="12" x2="60" y2="-10"/><line class="w-halo" x1="60" y1="90" x2="120" y2="68"/><line class="w-halo" x1="30" y1="-10" x2="120" y2="52"/>
+      <line class="w-lit" x1="0" y1="12" x2="120" y2="68"/><line class="w-lit" x1="0" y1="68" x2="120" y2="12"/><line class="w-lit" x1="60" y1="-10" x2="60" y2="90"/><line class="w-lit" x1="0" y1="40" x2="120" y2="40"/><line class="w-lit" x1="0" y1="12" x2="60" y2="-10"/><line class="w-lit" x1="60" y1="90" x2="120" y2="68"/><line class="w-lit" x1="30" y1="-10" x2="120" y2="52"/>
+      <polygon class="node" points="60.0,37.6 62.1,38.8 62.1,41.2 60.0,42.4 57.9,41.2 57.9,38.8"/><polygon class="node" points="30.0,23.6 32.1,24.8 32.1,27.2 30.0,28.4 27.9,27.2 27.9,24.8"/><polygon class="node" points="90.0,51.6 92.1,52.8 92.1,55.2 90.0,56.4 87.9,55.2 87.9,52.8"/><polygon class="node" points="0.0,37.6 2.1,38.8 2.1,41.2 0.0,42.4 -2.1,41.2 -2.1,38.8"/><polygon class="node" points="120.0,37.6 122.1,38.8 122.1,41.2 120.0,42.4 117.9,41.2 117.9,38.8"/><polygon class="node" points="60.0,-12.4 62.1,-11.2 62.1,-8.8 60.0,-7.6 57.9,-8.8 57.9,-11.2"/><polygon class="node" points="60.0,87.6 62.1,88.8 62.1,91.2 60.0,92.4 57.9,91.2 57.9,88.8"/></svg><div class="wrap">
     <div class="head"><h2 class="t-52 rev">Booked ahead</h2>
       <div class="lab t-label"><svg class="hex" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .6 11 3.3v5.4L6 11.4 1 8.7V3.3z"/></svg> <span id="bkCount">0 of 8 marked</span></div></div>
     <div class="bk" id="bk"><div class="bk__row" data-bk="1"><div class="bk__n">I</div><div class="bk__m"><span class="act__name">Statue of Liberty ferry</span><p class="body">Pedestal and crown tickets go months in advance</p></div><div class="bk__when">3+ months for crown</div><div class="bk__act"><button class="cap"><svg class="hex" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 .6 11 3.3v5.4L6 11.4 1 8.7V3.3z"/></svg><span>Mark booked</span></button></div></div>
@@ -869,7 +886,10 @@ header{position:relative;z-index:12;background:transparent}
       var cut = 0;
       if (wmEl) {
         var wr = wmEl.getBoundingClientRect();
-        cut = clamp(wr.top + wr.height * 0.50, 0, vh);
+        /* halving the letters reads well on a wide screen; on a phone the wordmark is
+           relatively huge, so the painting meets its baseline instead of slicing it */
+        var ratio = window.innerWidth <= 640 ? 0.97 : 0.50;
+        cut = clamp(wr.top + wr.height * ratio, 0, vh);
       }
       canvases[0].style.clipPath = 'inset(' + cut.toFixed(1) + 'px 0px 0px 0px)';
       stageClipTop = cut;
