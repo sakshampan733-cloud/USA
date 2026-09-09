@@ -561,6 +561,14 @@ header{position:relative;z-index:12;background:transparent}
   padding:0 var(--card-padding)}
 .bk__row:last-child,.legrow:last-child{border-bottom:0}
 
+
+/* ---- a dark tab runs black to every edge, with the lattice behind all of it ---- */
+html.dark-page,html.dark-page body{background:var(--surface-ink-room)}
+html.dark-page header{background:transparent;color:var(--color-paper)}
+html.dark-page .mark{border-color:currentColor}
+html.dark-page .tabs{color:var(--color-paper);border-bottom-color:rgba(255,255,255,.13)}
+html.dark-page .room--ink{background:transparent}
+
 </style>
 
 <div class="stage" aria-hidden="true"><div class="canvas" data-ar="0.995" data-fx="0.68" data-fy="0.30" data-vx="0.86" data-vy="0.40" data-city="New York" data-credit="Hassam &middot; Winter in Union Square &middot; The Met" style="background-image:var(--art-newyork)" role="img" aria-label="Hassam &middot; Winter in Union Square &middot; The Met"></div><div class="canvas" data-ar="1.828" data-fx="0.5" data-fy="0.5" data-vx="0.5" data-vy="0.5" data-city="Las Vegas" data-credit="Moran &middot; Grand Canyon of the Colorado River" style="background-image:var(--art-vegas)" role="img" aria-label="Moran &middot; Grand Canyon of the Colorado River"></div><div class="canvas" data-ar="2.317" data-fx="0.5" data-fy="0.5" data-vx="0.5" data-vy="0.5" data-city="Toronto" data-credit="Church &middot; Niagara &middot; 1857" style="background-image:var(--art-toronto)" role="img" aria-label="Church &middot; Niagara &middot; 1857"></div></div>
@@ -782,6 +790,11 @@ header{position:relative;z-index:12;background:transparent}
       if (panels[i]) panels[i].hidden = !on;
     });
     if (heroEl) heroEl.hidden = (key !== 'itinerary');
+    /* a dark tab is dark edge to edge -- no strip of putty above it */
+    var panel = document.getElementById('view-' + key);
+    var sec = panel && panel.querySelector('section');
+    document.documentElement.classList.toggle('dark-page',
+      !!(sec && sec.classList.contains('room--ink')));
     if (typeof openCity === 'function' && key !== 'travel') openCity(null);
     document.documentElement.classList.toggle('no-hero', key !== 'itinerary');
     window.scrollTo(0, 0);
